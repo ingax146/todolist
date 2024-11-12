@@ -12,7 +12,7 @@ import SwiftData
 final class TodoItem {
     var id = UUID()
     var title: String
-    var content: String = "" //NOTE: AttributedString requires additional complexity for storing in swiftData
+    var content: String = ""
     var completed: Bool = false
     var creationDate: Date
     

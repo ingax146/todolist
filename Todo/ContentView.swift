@@ -8,55 +8,19 @@
 import SwiftUI
 import SwiftData
 
-struct checkbox: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Button(action:{
-            configuration.isOn.toggle()
-        }, label: {
-            HStack {
-//                Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "checkmark.circle")
-                Image(systemName: configuration.isOn ? "square.fill" : "square")
-            }
-        })
-    }
-}
-
 struct TodoItemSummaryView : View {
     @State var item: TodoItem
     
     var body : some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(item.title)
-                    .font(.headline)
-                    .strikethrough(item.completed, color: .primary)
-                Text(item.content)
-                    .font(.subheadline)
-            }
+        VStack(alignment: .leading) {
+            Text(item.title)
+                .font(.headline)
+                .strikethrough(item.completed, color: .primary)
+            Text(item.content)
+                .font(.subheadline)
         }
         .onTapGesture {
             item.completed.toggle()
-        }
-    }
-}
-
-struct TodoItemContentView : View {
-    var item: TodoItem
-    var body : some View {
-        VStack {
-            Text(item.title)
-                .font(.headline)
-            Text(item.content)
-        }
-    }
-}
-
-struct NewTodoItemView: View {
-    @Binding var title: String
-    
-    var body : some View {
-        VStack {
-            TextField("Title", text: $title)
         }
     }
 }
