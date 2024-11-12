@@ -8,29 +8,122 @@
 import SwiftUI
 import SwiftData
 
+struct checkbox: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button(action:{
+            configuration.isOn.toggle()
+        }, label: {
+            HStack {
+//                Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "checkmark.circle")
+                Image(systemName: configuration.isOn ? "square.fill" : "square")
+            }
+        })
+    }
+}
+
+struct TodoItemSummaryView : View {
+    @State var item: TodoItem
+    
+    var body : some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(item.title)
+                    .font(.headline)
+                    .strikethrough(item.completed, color: .primary)
+                Text(item.content)
+                    .font(.subheadline)
+            }
+        }
+        .onTapGesture {
+            item.completed.toggle()
+        }
+    }
+}
+
+struct TodoItemContentView : View {
+    var item: TodoItem
+    var body : some View {
+        VStack {
+            Text(item.title)
+                .font(.headline)
+            Text(item.content)
+        }
+    }
+}
+
+struct NewTodoItemView: View {
+    @Binding var title: String
+    
+    var body : some View {
+        VStack {
+            TextField("Title", text: $title)
+        }
+    }
+}
+
+struct EditTodoItemView: View {
+    @State var item: TodoItem
+    
+    var body : some View {
+        List {
+            TextField("Title", text: $item.title)
+                .font(.headline)
+            LabeledContent("Description") {
+                TextEditor(text: $item.content)
+                    .frame(alignment:.leading)
+            }
+            Toggle("Completed", isOn: $item.completed)
+        }
+    }
+}
+
+extension Bool : @retroactive Comparable {
+    public static func < (lhs: Bool, rhs: Bool) -> Bool {
+        !lhs && rhs
+    }
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Query(sort: [SortDescriptor(\TodoItem.completed)]) private var items: [TodoItem]
+    
+    @State private var newItem: TodoItem = TodoItem(title: "", description: "")
+    @State private var showNewItemSheet: Bool = false
+    
     var body: some View {
         NavigationSplitView {
             List {
                 ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+                    TodoItemSummaryView(item: item)
                 }
                 .onDelete(perform: deleteItems)
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
                 ToolbarItem {
-                    Button(action: addItem) {
+                    Button(action: {
+                        showNewItemSheet.toggle()
+                    }) {
                         Label("Add Item", systemImage: "plus")
+                    }.sheet(isPresented: $showNewItemSheet) {
+                        VStack {
+                            EditTodoItemView(item: newItem)
+                            HStack {
+                                Button("Discard", action: {
+                                    showNewItemSheet.toggle()
+                                    newItem = TodoItem(title: "", description:"")
+                                })
+                                .buttonStyle(.bordered)
+                                .padding()
+                                Spacer()
+                                Button("Add", action: {
+                                    addItem()
+                                    showNewItemSheet.toggle()
+                                    newItem = TodoItem(title: "", description:"")
+                                }).disabled(newItem.title.isEmpty)
+                                .buttonStyle(.bordered)
+                                .padding()
+                            }
+                        }
                     }
                 }
             }
@@ -41,7 +134,6 @@ struct ContentView: View {
 
     private func addItem() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
             modelContext.insert(newItem)
         }
     }
@@ -57,5 +149,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: TodoItem.self, inMemory: true)
 }
